@@ -1,0 +1,609 @@
+/* Buttons/inputs don't inherit the page font by default (the browser uses its
+   own system font), which is why the header brand <button> wasn't Sora. */
+button, input, select, textarea { font-family: inherit; }
+h1, h2, h3 { font-family: var(--font-display); }
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Type pairing: Sora for titles/big numbers, DM Sans for everything else. */
+  --font-display: 'Sora', system-ui, sans-serif;
+  --font-body:    'DM Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+
+  /* Pastel palette: white, sky blue, peach. */
+  --white:      #ffffff;
+  --canvas:     #f8fafd;      /* page background */
+  --light:      #f1f5fb;      /* quiet fills, inputs */
+  --line:       #e7edf6;      /* hairlines */
+  --line-2:     #d8e2f0;
+
+  --blue:       #4274b8;      /* blue used as text / icon / link (readable) */
+  --blue-dark:  #2f5a99;
+  --blue-light: #8db4ea;
+  --blue-fill:  #8fbbee;      /* light blue surfaces + primary buttons (more pop) */
+  --blue-fill-hover: #78aae6;
+  --blue-mist:  #d3e4f8;
+  --on-blue:    #12294d;      /* text that sits on pastel blue */
+
+  --peach:      #ffe3d2;      /* pastel peach surfaces + sell actions */
+  --peach-hover:#ffd5bd;
+  --peach-mist: #fff3ea;
+  --peach-deep: #f2a278;      /* stars, bars */
+  --on-peach:   #8a4524;
+
+  --charcoal:   #26324a;      /* main text (soft navy ink) */
+  --charcoal-2: #55637d;
+  --charcoal-3: #8491a8;
+
+  --green:      #6fb58f;
+  --red:        #d96a66;
+  --orange:     #f2a278;
+
+  /* Corner radius scale. Use these instead of raw px values so every card, panel and
+     button belongs to one of a few shapes. Nested corners: inner = outer - padding
+     (e.g. a card of --r-md with 8px padding holds an image of --r-sm). */
+  --r-xs:   8px;     /* tiny controls, small buttons, menu items */
+  --r-sm:   12px;    /* inputs, small panels, images inside cards */
+  --r-md:   20px;    /* cards, list items */
+  --r-lg:   28px;    /* hero, modals, large panels */
+  --r-pill: 100px;   /* chips, pill buttons, search bars */
+  --radius:     var(--r-md);   /* legacy aliases */
+  --radius-sm:  var(--r-sm);
+  --shadow:     0 1px 2px rgba(38,50,74,0.04), 0 8px 24px rgba(66,116,184,0.06);
+  --login-bg:   linear-gradient(145deg, #7aaeea 0%, #a4c9f4 52%, #ffc4a2 100%);
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-body);
+  color: var(--charcoal);
+  background: var(--login-bg);
+  overflow: hidden;
+}
+
+/* The gradient + overflow:hidden above are only right for the full-screen
+   Login intro. Pages that need normal scrolling (Dashboard, etc.) toggle
+   this class on <body> in a useEffect so they get a light, scrollable page
+   instead — see Dashboard.jsx. */
+html.scroll-page, body.scroll-page {
+  height: auto;
+  min-height: 100%;
+  overflow: auto;
+  background: var(--canvas);
+}
+/* Only <html> should scroll. If <body> is also overflow:auto it becomes its
+   own (non-scrolling) scroll container and `position: sticky` headers inside
+   it stop sticking to the top of the screen. */
+body.scroll-page { overflow: visible; }
+
+/* Always reserve the scrollbar's width on scrolling pages. Without this the
+   scrollbar disappears when a panel (Messages / Cart / Sell) locks scrolling,
+   the viewport gets ~15px wider, and the centered nav shifts right. */
+html.scroll-page { scrollbar-gutter: stable; }
+
+/* ==================== INTRO OVERLAY ==================== */
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--login-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  pointer-events: none;
+  transition: opacity 0.7s ease;
+}
+
+.intro-overlay.fade-out {
+  opacity: 0;
+}
+
+.intro-overlay::before {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: rgba(255,231,190,0.08);
+  bottom: -100px;
+  left: -100px;
+  filter: blur(60px);
+}
+
+.intro-overlay::after {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(168,212,255,0.1);
+  top: -60px;
+  right: -60px;
+  filter: blur(50px);
+}
+
+.intro-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(20px);
+  position: relative;
+  z-index: 2;
+}
+
+.intro-brand.brand-in {
+  animation: brandReveal 1.2s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+}
+
+.intro-brand.brand-out {
+  animation: brandFade 0.5s ease forwards;
+}
+
+.intro-icon {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.intro-name {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.03em;
+}
+
+.intro-tagline {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 300;
+  opacity: 0;
+  position: relative;
+  z-index: 2;
+  transition: opacity 0.6s ease;
+}
+
+.intro-tagline.tagline-in  { opacity: 1; }
+.intro-tagline.tagline-out { opacity: 0; }
+
+/* ==================== PAGE LAYOUT ==================== */
+.page-wrapper {
+  display: flex;
+  min-height: 100vh;
+  transform: translateX(100%);
+  transition: transform 1.6s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+.page-wrapper.slide-in {
+  transform: translateX(0);
+}
+
+/* ==================== LEFT PANEL ==================== */
+.left-panel {
+  flex: 1.1;
+  background: var(--login-bg);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  padding: 80px 80px 80px 120px;
+}
+
+.left-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 540px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.02em;
+}
+
+.left-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 0 32px;
+  gap: 48px;
+}
+
+.tagline-heading {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 2.8vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.18;
+  color: var(--white);
+  letter-spacing: -0.03em;
+  margin-bottom: 20px;
+}
+
+.tagline-sub {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.72);
+  font-weight: 300;
+  max-width: 420px;
+}
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.feature-item {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.feature-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  transition: transform 0.3s;
+}
+
+.feature-item:hover .feature-icon {
+  transform: scale(1.08);
+}
+
+.feature-text h3 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--white);
+  margin-bottom: 6px;
+}
+
+.feature-text p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.65);
+  font-weight: 300;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.12;
+  filter: blur(60px);
+  pointer-events: none;
+}
+
+.blob-1 {
+  width: 420px;
+  height: 420px;
+  background: var(--peach);
+  bottom: -80px;
+  left: -80px;
+  animation: blobFloat 8s ease-in-out infinite;
+}
+
+.blob-2 {
+  width: 280px;
+  height: 280px;
+  background: #a8d4ff;
+  top: 60px;
+  right: -40px;
+  animation: blobFloat 10s ease-in-out infinite reverse;
+}
+
+/* ==================== RIGHT PANEL (shared card styles) ==================== */
+.right-panel {
+  flex: 0.9;
+  background: var(--light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 56px;
+}
+
+.right-inner {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.form-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 32px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(50, 111, 202, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-header h2 {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--charcoal);
+  letter-spacing: -0.04em;
+  margin-bottom: 6px;
+}
+
+.form-header p {
+  font-size: 0.95rem;
+  color: var(--charcoal-3);
+  font-weight: 300;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-group label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--charcoal-2);
+}
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--charcoal-3);
+  pointer-events: none;
+  transition: color 0.25s;
+}
+
+.input-wrap:focus-within .input-icon {
+  color: var(--blue);
+}
+
+.input-wrap input {
+  width: 100%;
+  padding: 12px 14px 12px 32px;
+  border: 1.5px solid #dde2ec;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--charcoal);
+  background: var(--light);
+  outline: none;
+  transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+}
+
+.input-wrap input::placeholder {
+  color: #b0b8c8;
+  font-weight: 300;
+}
+
+.input-wrap input:focus {
+  border-color: var(--blue);
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(50, 111, 202, 0.1);
+}
+
+.toggle-pw {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--charcoal-3);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.toggle-pw:hover { color: var(--blue); }
+
+.row-2cols {
+  display: flex;
+  gap: 12px;
+}
+
+.row-2cols .input-group {
+  flex: 1;
+}
+
+.form-options {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.forgot-link {
+  font-size: 0.82rem;
+  color: var(--blue);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 13px 20px;
+  background: var(--blue);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.25s, transform 0.15s, box-shadow 0.25s;
+  box-shadow: 0 4px 16px rgba(50, 111, 202, 0.3);
+}
+
+.btn-primary:hover {
+  background: var(--blue-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(50, 111, 202, 0.38);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.switch-cta {
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--charcoal-3);
+}
+
+.switch-cta a {
+  color: var(--blue);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.legal-note {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--charcoal-3);
+}
+
+.legal-note a {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+.auth-support {
+  margin-top: 12px; color: var(--charcoal-3); font-size: 0.78rem; line-height: 1.55; text-align: center;
+}
+.auth-support a { color: var(--blue); font-weight: 600; text-decoration: underline; }
+
+.hidden-card {
+  display: none;
+}
+
+/* ==================== STATUS MESSAGE ==================== */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  background: var(--charcoal);
+  color: var(--white);
+  padding: 14px 20px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  box-shadow: 0 8px 32px rgba(60,60,60,0.22);
+  transform: translateY(80px);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+  pointer-events: none;
+  z-index: 999;
+}
+
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast svg { color: #5ddf7a; flex-shrink: 0; }
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes brandReveal {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes brandFade {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes blobFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-24px) scale(1.04); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 900px) {
+  .page-wrapper { flex-direction: column; }
+  .left-panel { padding: 40px 32px 48px; }
+  .features { display: none; }
+  .right-panel { padding: 40px 24px 48px; }
+  .row-2cols { flex-direction: column; gap: 0; }
+}
+
+@media (max-width: 480px) {
+  .left-panel { padding: 28px 20px 36px; }
+  .form-card { padding: 24px 20px; }
+}
+
+/* Edge adds its own "show password" eye inside password inputs, which overlaps our custom one. Hide it. */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+/* Sora's password bullet glyph is square-ish. Use a system font for the typed dots only
+   (placeholder keeps Sora so it still matches the rest of the form). */
+input[type="password"] {
+  font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+  font-size: 1.2rem;        /* bigger dots */
+  letter-spacing: -0.04em;  /* tighter spacing between dots */
+}
+input[type="password"]::placeholder {
+  font-family: var(--font-body);
+  font-size: 0.9rem;        /* placeholder keeps its normal size */
+  letter-spacing: normal;
+}

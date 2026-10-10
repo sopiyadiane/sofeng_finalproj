@@ -1,0 +1,39 @@
+.pp-seller-buttons { grid-column: 1 / -1; display: grid; gap: 8px; }
+.pp-seller-buttons .pp-seller-msg { grid-column: auto; }
+.pp-report-link {
+  padding: 7px 10px; border: 1px solid var(--line-2); border-radius: var(--r-pill);
+  background: transparent; color: var(--charcoal-2); font: 600 0.78rem var(--font-body); cursor: pointer;
+}
+.pp-report-link:hover { border-color: var(--red); color: var(--red); }
+.pp-about-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.pp-about-head .pp-label { margin-bottom: 12px; }
+.pp-report-backdrop {
+  position: fixed; inset: 0; z-index: 150; display: grid; place-items: center; padding: 18px;
+  background: rgba(10, 20, 35, 0.65);
+}
+.pp-report-dialog {
+  width: min(100%, 460px); display: flex; flex-direction: column; gap: 10px; padding: 24px;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--white); color: var(--charcoal);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.pp-report-dialog h2 { font-family: var(--font-display); font-size: 1.2rem; }
+.pp-report-dialog p { margin-bottom: 4px; color: var(--charcoal-2); font-size: 0.9rem; }
+.pp-report-dialog label { margin-top: 4px; font-size: 0.82rem; font-weight: 600; }
+.pp-report-dialog select, .pp-report-dialog textarea {
+  width: 100%; padding: 11px 12px; border: 1px solid var(--line-2); border-radius: var(--r-sm);
+  background: var(--white); color: var(--charcoal); font: 0.9rem var(--font-body);
+}
+.pp-report-dialog textarea { resize: vertical; }
+.pp-report-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.pp-report-actions button {
+  padding: 9px 14px; border: 1px solid var(--line-2); border-radius: var(--r-pill);
+  background: var(--white); color: var(--charcoal); font: 600 0.82rem var(--font-body); cursor: pointer;
+}
+.pp-report-actions button[type="submit"] { border-color: var(--blue); background: var(--blue); color: #fff; }
+.pp-report-actions button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+html[data-theme="dark"] .pp-report-dialog {
+  --white: #172235; --charcoal: #e8eef8; --charcoal-2: #b7c4d8; --line: #293951; --line-2: #3a506f;
+}
+html[data-theme="dark"] .pp-report-actions button { background: #172235; color: #e8eef8; border-color: #3a506f; }
+html[data-theme="dark"] .pp-report-actions button[type="submit"] { background: var(--blue); color: #fff; }
